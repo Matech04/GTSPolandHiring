@@ -1,0 +1,26 @@
+# Skompilowane pliki lokalne (zapobiega konfliktom z budowaniem w kontenerze)
+**/bin/
+**/obj/
+**/out/
+
+# Pliki IDE oraz edytorów
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# System kontroli wersji i pliki środowiskowe
+.git/
+.gitignore
+.dockerignore
+.env
+
+# Dokumentacja i pliki tymczasowe
+README.md
+Dockerfile*
+docker-compose*
+**/[Bb]in/
+**/[Oo]bj/
