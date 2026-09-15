@@ -1,0 +1,6 @@
+@GTSPolandHiring.WebApi_HostAddress = http://localhost:5135
+
+GET {{GTSPolandHiring.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
