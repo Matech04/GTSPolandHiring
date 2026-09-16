@@ -1,5 +1,6 @@
 using GTSPolandHiring.WebApi.Infrastructure.Errors;
 using FluentValidation;
+using System.Globalization;
 
 namespace GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
 
@@ -20,7 +21,11 @@ public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCo
             .Matches(@"^\+?[1-9]\d{1,14}$").WithErrorCode("EMPLOYEE_PHONE_INVALID");
 
         RuleFor(x => x.HireDate)
-            .NotEmpty().WithErrorCode("EMPLOYEE_HIREDATE_REQUIRED");
+            .NotEmpty()
+            .WithErrorCode("EMPLOYEE_HIREDATE_REQUIRED")
+            .Must(BeAValidDate)
+            .WithErrorCode("EMPLOYEE_HIREDATE_INVALID_FORMAT")
+            .WithMessage("HireDate must be in YYYY-MM-DD format.");
 
         RuleFor(x => x.Address)
             .NotEmpty().WithErrorCode("EMPLOYEE_ADDRESS_REQUIRED");
@@ -33,5 +38,10 @@ public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCo
 
         RuleFor(x => x.Pincode)
             .NotEmpty().WithErrorCode("EMPLOYEE_PINCODE_REQUIRED");
+    }
+
+    private bool BeAValidDate(string date)
+    {
+        return DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
     }
 }

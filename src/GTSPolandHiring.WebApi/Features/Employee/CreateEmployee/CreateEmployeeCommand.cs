@@ -5,7 +5,7 @@ using MediatR;
 namespace GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
 public record CreateEmployeeCommand(
     string Name,
-    DateOnly HireDate,
+    string HireDate,
     string Email,
     string PhoneNo,
     string ProfilePicture,

@@ -4,6 +4,7 @@ using GTSPolandHiring.WebApi.Infrastructure.Persistence;
 using FluentResults;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
 
@@ -28,7 +29,7 @@ public class CreateEmployeeCommandHandler(AppDbContext dbContext)
         var employee = new Domain.Employee
         {
             Name = command.Name,
-            HireDate = command.HireDate,
+            HireDate = DateOnly.ParseExact(command.HireDate, "yyyy-MM-dd", CultureInfo.InvariantCulture),
             Email = command.Email,
             PhoneNo = command.PhoneNo,
             ProfilePicture = command.ProfilePicture,
