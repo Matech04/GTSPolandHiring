@@ -1,9 +1,11 @@
-using GTSPolandHiring.WebApi.Features.Employees.Entities;
+using GTSPolandHiring.WebApi.Features.Employees.GetEmployee;
 using FluentResults;
 using MediatR;
 
-namespace GTSPolandHiring.WebApi.Features.Employees.CreateEmployee;
-public record CreateEmployeeCommand(
+namespace GTSPolandHiring.WebApi.Features.Employees.UpdateEmployee;
+
+public record UpdateEmployeeCommand(
+    Guid Id,
     string Name,
     string HireDate,
     string Email,
@@ -15,4 +17,4 @@ public record CreateEmployeeCommand(
     string Country,
     string City,
     string Pincode
-) : IRequest<Result<Guid>>, IEmployeeInput;
+) : IRequest<Result<GetEmployeeResponse>>, IEmployeeInput;
