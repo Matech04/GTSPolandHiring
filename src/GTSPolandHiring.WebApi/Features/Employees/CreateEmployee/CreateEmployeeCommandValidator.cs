@@ -1,12 +1,12 @@
 using GTSPolandHiring.WebApi.Infrastructure.Errors;
 using FluentValidation;
 using System.Globalization;
-using GTSPolandHiring.WebApi.Features.Employee.Domain;
+using GTSPolandHiring.WebApi.Features.Employees.Entities;
 using GTSPolandHiring.WebApi.Infrastructure.Options;
 using FluentValidation.Results;
 using Microsoft.Extensions.Options;
 
-namespace GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
+namespace GTSPolandHiring.WebApi.Features.Employees.CreateEmployee;
 
 public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCommand>
 {

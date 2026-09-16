@@ -1,4 +1,4 @@
-namespace GTSPolandHiring.WebApi.Features.Employee.Domain;
+namespace GTSPolandHiring.WebApi.Features.Employees.Entities;
 
 public class Employee
 {

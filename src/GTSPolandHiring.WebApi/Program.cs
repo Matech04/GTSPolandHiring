@@ -1,7 +1,7 @@
 using GTSPolandHiring.WebApi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Asp.Versioning;
-using GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
+using GTSPolandHiring.WebApi.Features.Employees.CreateEmployee;
 using Scalar.AspNetCore;
 using FluentValidation;
 using GTSPolandHiring.WebApi.Infrastructure.Behaviors;

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using GTSPolandHiring.WebApi.Infrastructure.Extensions;
 
-namespace GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
+namespace GTSPolandHiring.WebApi.Features.Employees.CreateEmployee;
 
 public static class CreateEmployeeEndpoint
 {

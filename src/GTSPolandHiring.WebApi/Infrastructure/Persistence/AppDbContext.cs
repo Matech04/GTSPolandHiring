@@ -1,5 +1,5 @@
 
-using GTSPolandHiring.WebApi.Features.Employee.Domain;
+using GTSPolandHiring.WebApi.Features.Employees.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace GTSPolandHiring.WebApi.Infrastructure.Persistence;

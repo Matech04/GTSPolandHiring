@@ -1,3 +1,7 @@
 <Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/tests/">
+    <Project Path="tests/GTSPolandHiring.WebApi.Tests/GTSPolandHiring.WebApi.Tests.csproj" />
+  </Folder>
   <Project Path="src/GTSPolandHiring.WebApi/GTSPolandHiring.WebApi.csproj" />
 </Solution>

@@ -1,8 +1,8 @@
-using GTSPolandHiring.WebApi.Features.Employee.Domain;
+using GTSPolandHiring.WebApi.Features.Employees.Entities;
 using FluentResults;
 using MediatR;
 
-namespace GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
+namespace GTSPolandHiring.WebApi.Features.Employees.CreateEmployee;
 public record CreateEmployeeCommand(
     string Name,
     string HireDate,

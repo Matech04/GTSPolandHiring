@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace GTSPolandHiring.WebApi.Features.Employee.Domain;
+namespace GTSPolandHiring.WebApi.Features.Employees.Entities;
 
 public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
 {
