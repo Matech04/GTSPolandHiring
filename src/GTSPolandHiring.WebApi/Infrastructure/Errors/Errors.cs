@@ -34,3 +34,12 @@ public class UnsupportedMediaTypeError : BaseError
         Metadata.Add("UnsupportedMediaType", true);
     }
 }
+
+public class ValidationError : BaseError
+{
+    public ValidationError(string message, string code = "VALIDATION_ERROR")
+        : base(code, message)
+    {
+        
+    }
+}

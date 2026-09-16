@@ -1,34 +1,66 @@
 using GTSPolandHiring.WebApi.Infrastructure.Errors;
 using FluentValidation;
 using System.Globalization;
+using GTSPolandHiring.WebApi.Features.Employee.Domain;
 
 namespace GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
 
 public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCommand>
 {
-    public CreateEmployeeCommandValidator()
+    public CreateEmployeeCommandValidator(IConfiguration configuration)
     {
+
+        var allowedEmailDomain = configuration["AllowedEmailDomain"] ?? "company.com";
+        var companyFoundedDateString = configuration["CompanyFoundedDate"] ?? "1999-01-01";
+        
+        if (!DateOnly.TryParseExact(companyFoundedDateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var companyFoundedDate))
+        {
+            companyFoundedDate = new DateOnly(1999, 1, 1);
+        }
+
         RuleFor(x => x.Name)
             .NotEmpty().WithErrorCode("EMPLOYEE_NAME_REQUIRED")
             .MaximumLength(100).WithErrorCode("EMPLOYEE_NAME_TOO_LONG");
-
-        RuleFor(x => x.Email)
-            .NotEmpty().WithErrorCode("EMPLOYEE_EMAIL_REQUIRED")
-            .EmailAddress().WithErrorCode("EMPLOYEE_EMAIL_INVALID");
-
-        RuleFor(x => x.PhoneNo)
-            .NotEmpty().WithErrorCode("EMPLOYEE_PHONE_REQUIRED")
-            .Matches(@"^\+?[1-9]\d{1,14}$").WithErrorCode("EMPLOYEE_PHONE_INVALID");
 
         RuleFor(x => x.HireDate)
             .NotEmpty()
             .WithErrorCode("EMPLOYEE_HIREDATE_REQUIRED")
             .Must(BeAValidDate)
             .WithErrorCode("EMPLOYEE_HIREDATE_INVALID_FORMAT")
-            .WithMessage("HireDate must be in YYYY-MM-DD format.");
+            .WithMessage("HireDate must be in YYYY-MM-DD format.")
+            .Must(NotBeInFuture).WithErrorCode("EMPLOYEE_HIREDATE_CANNOT_BE_FUTURE")
+            .WithMessage("HireDate cannot be in the future.")
+            .Must(date => NotBefore(date, companyFoundedDate)).WithErrorCode("EMPLOYEE_HIREDATE_CANNOT_BE_BEFORE_COMPANY_OPENED")
+            .WithMessage("HireDate cannot be before company was created");
+
+        RuleFor(x => x.Email)
+            .NotEmpty().WithErrorCode("EMPLOYEE_EMAIL_REQUIRED")
+            .EmailAddress().WithErrorCode("EMPLOYEE_EMAIL_INVALID")
+            .Must(email => HaveAllowedDomain(email, allowedEmailDomain))
+            .WithErrorCode("EMPLOYEE_EMAIL_INVALID_DOMAIN")
+            .WithMessage($"Email must belong to the @{allowedEmailDomain} domain.");
+
+
+        RuleFor(x => x.PhoneNo)
+            .NotEmpty().WithErrorCode("EMPLOYEE_PHONE_REQUIRED")
+            .Matches(@"^\+?[1-9]\d{1,14}$").WithErrorCode("EMPLOYEE_PHONE_INVALID");
+
+        RuleFor(x => x.ProfilePicture)
+            .Must(BeSecureUrl)
+            .WithErrorCode("EMPLOYEE_PROFILE_PICTURE_NOT_SECURE")
+            .WithMessage("ProfilePicture URL must start with 'https://'."); 
+
+        RuleFor(x => x.Status)
+            .NotEmpty().WithErrorCode("EMPLOYEE_STATUS_REQUIRED")
+            .IsEnumName(typeof(EmployeeStatus), caseSensitive: false)
+            .WithErrorCode("EMPLOYEE_STATUS_INVALID")
+            .WithMessage("Status must be a valid EmployeeStatus value.");
 
         RuleFor(x => x.Address)
             .NotEmpty().WithErrorCode("EMPLOYEE_ADDRESS_REQUIRED");
+
+        RuleFor(x => x.State)
+             .NotEmpty().WithErrorCode("STATE_REQUIRED");
 
         RuleFor(x => x.City)
             .NotEmpty().WithErrorCode("EMPLOYEE_CITY_REQUIRED");
@@ -40,8 +72,39 @@ public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCo
             .NotEmpty().WithErrorCode("EMPLOYEE_PINCODE_REQUIRED");
     }
 
-    private bool BeAValidDate(string date)
+    private static bool BeAValidDate(string date)
     {
         return DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+    }
+
+    private static bool NotBeInFuture(string date)
+    {
+        if (DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+        {
+            return parsedDate <= DateOnly.FromDateTime(DateTime.UtcNow);
+        }
+        return true;
+    }
+
+    private static bool NotBefore(string date, DateOnly before)
+    {
+        if (DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
+        {
+            return parsedDate >= before;
+        }
+        return true;
+    }
+
+    private static bool HaveAllowedDomain(string email, string allowedDomain)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@')) return false;
+        var domain = email.Split('@')[1].ToLowerInvariant();
+        return domain.Equals(allowedDomain.ToLowerInvariant(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool BeSecureUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return true; 
+        return url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
     }
 }

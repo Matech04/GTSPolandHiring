@@ -9,7 +9,7 @@ public record CreateEmployeeCommand(
     string Email,
     string PhoneNo,
     string ProfilePicture,
-    EmployeeStatus Status,
+    string Status,
     string Address,
     string State,
     string Country,
