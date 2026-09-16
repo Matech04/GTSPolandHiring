@@ -2,6 +2,7 @@ using GTSPolandHiring.WebApi.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Asp.Versioning;
 using GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 var apiVersionSet = app.NewApiVersionSet()

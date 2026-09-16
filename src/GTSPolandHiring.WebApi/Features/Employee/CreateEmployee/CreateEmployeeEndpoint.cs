@@ -15,7 +15,7 @@ public static class CreateEmployeeEndpoint
             {
                 var result = await mediator.Send(command, ct);
 
-                return result.ToHttpResult()
+                return result.ToHttpResult();
 
             });
     }
