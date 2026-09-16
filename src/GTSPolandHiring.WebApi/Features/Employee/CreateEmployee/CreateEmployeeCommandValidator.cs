@@ -2,36 +2,54 @@ using GTSPolandHiring.WebApi.Infrastructure.Errors;
 using FluentValidation;
 using System.Globalization;
 using GTSPolandHiring.WebApi.Features.Employee.Domain;
+using GTSPolandHiring.WebApi.Infrastructure.Options;
+using FluentValidation.Results;
+using Microsoft.Extensions.Options;
 
 namespace GTSPolandHiring.WebApi.Features.Employee.CreateEmployee;
 
 public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCommand>
 {
-    public CreateEmployeeCommandValidator(IConfiguration configuration)
+    public CreateEmployeeCommandValidator(IOptions<CompanyPolicyOptions> options)
     {
 
-        var allowedEmailDomain = configuration["AllowedEmailDomain"] ?? "company.com";
-        var companyFoundedDateString = configuration["CompanyFoundedDate"] ?? "1999-01-01";
-        
-        if (!DateOnly.TryParseExact(companyFoundedDateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var companyFoundedDate))
-        {
-            companyFoundedDate = new DateOnly(1999, 1, 1);
-        }
+        var allowedEmailDomain = options.Value.AllowedEmailDomain;
+        var companyFoundedDateString = options.Value.CompanyFoundedDate;
+
+        DateOnly.TryParseExact(companyFoundedDateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var companyFoundedDate);
 
         RuleFor(x => x.Name)
             .NotEmpty().WithErrorCode("EMPLOYEE_NAME_REQUIRED")
             .MaximumLength(100).WithErrorCode("EMPLOYEE_NAME_TOO_LONG");
 
         RuleFor(x => x.HireDate)
-            .NotEmpty()
-            .WithErrorCode("EMPLOYEE_HIREDATE_REQUIRED")
-            .Must(BeAValidDate)
-            .WithErrorCode("EMPLOYEE_HIREDATE_INVALID_FORMAT")
-            .WithMessage("HireDate must be in YYYY-MM-DD format.")
-            .Must(NotBeInFuture).WithErrorCode("EMPLOYEE_HIREDATE_CANNOT_BE_FUTURE")
-            .WithMessage("HireDate cannot be in the future.")
-            .Must(date => NotBefore(date, companyFoundedDate)).WithErrorCode("EMPLOYEE_HIREDATE_CANNOT_BE_BEFORE_COMPANY_OPENED")
-            .WithMessage("HireDate cannot be before company was created");
+            .NotEmpty().WithErrorCode("EMPLOYEE_HIREDATE_REQUIRED")
+            .Custom((value, context) =>
+            {
+                if (!DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+                {
+                    context.AddFailure(new ValidationFailure(context.PropertyPath, "HireDate must be in YYYY-MM-DD format.")
+                    {
+                        ErrorCode = "EMPLOYEE_HIREDATE_INVALID_FORMAT"
+                    });
+                    return;
+                }
+
+                if (date > DateOnly.FromDateTime(DateTime.UtcNow))
+                {
+                    context.AddFailure(new ValidationFailure(context.PropertyPath, "HireDate cannot be in the future.")
+                    {
+                        ErrorCode = "EMPLOYEE_HIREDATE_CANNOT_BE_FUTURE"
+                    });
+                }
+                else if (date < companyFoundedDate)
+                {
+                    context.AddFailure(new ValidationFailure(context.PropertyPath, "HireDate cannot be before company was created.")
+                    {
+                        ErrorCode = "EMPLOYEE_HIREDATE_CANNOT_BE_BEFORE_COMPANY_OPENED"
+                    });
+                }
+            });
 
         RuleFor(x => x.Email)
             .NotEmpty().WithErrorCode("EMPLOYEE_EMAIL_REQUIRED")
@@ -48,7 +66,7 @@ public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCo
         RuleFor(x => x.ProfilePicture)
             .Must(BeSecureUrl)
             .WithErrorCode("EMPLOYEE_PROFILE_PICTURE_NOT_SECURE")
-            .WithMessage("ProfilePicture URL must start with 'https://'."); 
+            .WithMessage("ProfilePicture URL must start with 'https://'.");
 
         RuleFor(x => x.Status)
             .NotEmpty().WithErrorCode("EMPLOYEE_STATUS_REQUIRED")
@@ -72,28 +90,6 @@ public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCo
             .NotEmpty().WithErrorCode("EMPLOYEE_PINCODE_REQUIRED");
     }
 
-    private static bool BeAValidDate(string date)
-    {
-        return DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
-    }
-
-    private static bool NotBeInFuture(string date)
-    {
-        if (DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
-        {
-            return parsedDate <= DateOnly.FromDateTime(DateTime.UtcNow);
-        }
-        return true;
-    }
-
-    private static bool NotBefore(string date, DateOnly before)
-    {
-        if (DateOnly.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
-        {
-            return parsedDate >= before;
-        }
-        return true;
-    }
 
     private static bool HaveAllowedDomain(string email, string allowedDomain)
     {
@@ -104,7 +100,7 @@ public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCo
 
     private static bool BeSecureUrl(string url)
     {
-        if (string.IsNullOrWhiteSpace(url)) return true; 
+        if (string.IsNullOrWhiteSpace(url)) return true;
         return url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -6,6 +6,8 @@ using Scalar.AspNetCore;
 using FluentValidation;
 using GTSPolandHiring.WebApi.Infrastructure.Behaviors;
 using GTSPolandHiring.WebApi.Infrastructure.Errors;
+using GTSPolandHiring.WebApi.Infrastructure.Options;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,12 @@ builder.Services.AddMediatR(cfg =>
     
     cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
 });
+
+builder.Services.AddOptions<CompanyPolicyOptions>()
+    .Bind(builder.Configuration.GetSection(CompanyPolicyOptions.SectionName))
+    .Validate(o => DateOnly.TryParseExact(o.CompanyFoundedDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _),
+        "CompanyFoundedDate must be in yyyy-MM-dd format")
+    .ValidateOnStart();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

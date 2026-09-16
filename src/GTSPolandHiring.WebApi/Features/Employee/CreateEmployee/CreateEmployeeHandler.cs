@@ -25,14 +25,6 @@ public class CreateEmployeeCommandHandler(AppDbContext dbContext)
             ));
         }
 
-        if (!Enum.TryParse<EmployeeStatus>(command.Status, ignoreCase:true, out var status))
-        {
-            return Result.Fail(new ValidationError(
-                message: $"Incorrect status: {command.Status}",
-                code: "INCORRECT_EMPLOYEE_STATUS"
-            ));
-        }
-
 
         var employee = new Domain.Employee
         {
@@ -41,7 +33,7 @@ public class CreateEmployeeCommandHandler(AppDbContext dbContext)
             Email = command.Email,
             PhoneNo = command.PhoneNo,
             ProfilePicture = command.ProfilePicture,
-            Status = status,
+            Status =  Enum.Parse<EmployeeStatus>(command.Status, ignoreCase: true),
             Address = command.Address,
             State = command.State,
             Country = command.Country,
