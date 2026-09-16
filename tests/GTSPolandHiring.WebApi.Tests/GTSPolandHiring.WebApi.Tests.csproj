@@ -25,4 +25,10 @@
     <ProjectReference Include="..\..\src\GTSPolandHiring.WebApi\GTSPolandHiring.WebApi.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="TestData\employees_sample.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

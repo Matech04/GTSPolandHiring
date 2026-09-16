@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using GTSPolandHiring.WebApi.Features.Employees.Entities;
 using GTSPolandHiring.WebApi.Infrastructure.Options;
 using FluentValidation;
@@ -58,7 +59,7 @@ public abstract class EmployeeInputValidator<T> : AbstractValidator<T> where T :
 
         RuleFor(x => x.PhoneNo)
             .NotEmpty().WithErrorCode("EMPLOYEE_PHONE_REQUIRED")
-            .Matches(@"^\+?[1-9]\d{1,14}$").WithErrorCode("EMPLOYEE_PHONE_INVALID");
+            .Must(BeAValidPhoneNumber).WithErrorCode("EMPLOYEE_PHONE_INVALID");
 
         RuleFor(x => x.ProfilePicture)
             .Must(BeSecureUrl)
@@ -85,6 +86,14 @@ public abstract class EmployeeInputValidator<T> : AbstractValidator<T> where T :
 
         RuleFor(x => x.Pincode)
             .NotEmpty().WithErrorCode("EMPLOYEE_PINCODE_REQUIRED");
+    }
+
+    private static bool BeAValidPhoneNumber(string phoneNo)
+    {
+        // Accept common country-specific separators (spaces, hyphens, parentheses) in addition
+        // to strict E.164; the underlying digit sequence still has to satisfy the E.164 shape.
+        var digitsOnly = Regex.Replace(phoneNo, @"[\s\-\(\)]", "");
+        return Regex.IsMatch(digitsOnly, @"^\+?[1-9]\d{1,14}$");
     }
 
     private static bool HaveAllowedDomain(string email, string allowedDomain)

@@ -160,7 +160,7 @@ public class CreateEmployeeCommandValidatorTests
 
     [Theory]
     [InlineData("abc123")]
-    [InlineData("123-456-789")]
+    [InlineData("+1-abc-1234")]
     [InlineData("0")]
     public void Should_Fail_When_PhoneNo_Has_Invalid_Format(string phoneNo)
     {
@@ -168,6 +168,17 @@ public class CreateEmployeeCommandValidatorTests
 
         result.ShouldHaveValidationErrorFor(x => x.PhoneNo)
             .WithErrorCode("EMPLOYEE_PHONE_INVALID");
+    }
+
+    [Theory]
+    [InlineData("+1-555-0101")]
+    [InlineData("+48 123 456 789")]
+    [InlineData("(123) 456-7890")]
+    public void Should_Pass_When_PhoneNo_Uses_Common_Country_Specific_Separators(string phoneNo)
+    {
+        var result = _validator.TestValidate(ValidCommand(phoneNo: phoneNo));
+
+        result.ShouldNotHaveValidationErrorFor(x => x.PhoneNo);
     }
 
     [Fact]
