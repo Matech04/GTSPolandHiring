@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Asp.Versioning;
 using GTSPolandHiring.WebApi.Features.Employees.CreateEmployee;
 using GTSPolandHiring.WebApi.Features.Employees.GetEmployee;
+using GTSPolandHiring.WebApi.Features.Employees.GetEmployees;
 using Scalar.AspNetCore;
 using FluentValidation;
 using GTSPolandHiring.WebApi.Infrastructure.Behaviors;
@@ -67,6 +68,7 @@ var v1Group = app.MapGroup("api/v{version:apiVersion}")
 
 v1Group.MapCreateEmployeeEndpoint();
 v1Group.MapGetEmployeeEndpoint();
+v1Group.MapGetEmployeesEndpoint();
 
 app.UseHttpsRedirection();
 
