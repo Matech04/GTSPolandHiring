@@ -40,6 +40,11 @@ builder.Services.AddOptions<CompanyPolicyOptions>()
         "CompanyFoundedDate must be in yyyy-MM-dd format")
     .ValidateOnStart();
 
+builder.Services.AddOptions<BulkImportOptions>()
+    .Bind(builder.Configuration.GetSection(BulkImportOptions.SectionName))
+    .Validate(o => o.MaxFileSizeBytes > 0, "MaxFileSizeBytes must be greater than zero.")
+    .ValidateOnStart();
+
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(
@@ -53,6 +58,8 @@ builder.Services.AddApiVersioning(options =>
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
 });
+
+builder.Services.AddRequestTimeouts();
 
 var app = builder.Build();
 
@@ -77,6 +84,8 @@ v1Group.MapDeleteEmployeeEndpoint();
 v1Group.MapBulkImportEmployeesEndpoint();
 
 app.UseHttpsRedirection();
+
+app.UseRequestTimeouts();
 
 var supportedCultures = new[] { "en-US" };
 var localizationOptions = new RequestLocalizationOptions()

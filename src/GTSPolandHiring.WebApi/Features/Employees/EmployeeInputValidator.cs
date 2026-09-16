@@ -59,9 +59,11 @@ public abstract class EmployeeInputValidator<T> : AbstractValidator<T> where T :
 
         RuleFor(x => x.PhoneNo)
             .NotEmpty().WithErrorCode("EMPLOYEE_PHONE_REQUIRED")
+            .MaximumLength(30).WithErrorCode("EMPLOYEE_PHONE_TOO_LONG")
             .Must(BeAValidPhoneNumber).WithErrorCode("EMPLOYEE_PHONE_INVALID");
 
         RuleFor(x => x.ProfilePicture)
+            .MaximumLength(2048).WithErrorCode("EMPLOYEE_PROFILE_PICTURE_TOO_LONG")
             .Must(BeSecureUrl)
             .WithErrorCode("EMPLOYEE_PROFILE_PICTURE_NOT_SECURE")
             .WithMessage("ProfilePicture URL must start with 'https://'.");
@@ -73,19 +75,24 @@ public abstract class EmployeeInputValidator<T> : AbstractValidator<T> where T :
             .WithMessage("Status must be a valid EmployeeStatus value.");
 
         RuleFor(x => x.Address)
-            .NotEmpty().WithErrorCode("EMPLOYEE_ADDRESS_REQUIRED");
+            .NotEmpty().WithErrorCode("EMPLOYEE_ADDRESS_REQUIRED")
+            .MaximumLength(255).WithErrorCode("EMPLOYEE_ADDRESS_TOO_LONG");
 
         RuleFor(x => x.State)
-            .NotEmpty().WithErrorCode("STATE_REQUIRED");
+            .NotEmpty().WithErrorCode("STATE_REQUIRED")
+            .MaximumLength(100).WithErrorCode("EMPLOYEE_STATE_TOO_LONG");
 
         RuleFor(x => x.City)
-            .NotEmpty().WithErrorCode("EMPLOYEE_CITY_REQUIRED");
+            .NotEmpty().WithErrorCode("EMPLOYEE_CITY_REQUIRED")
+            .MaximumLength(100).WithErrorCode("EMPLOYEE_CITY_TOO_LONG");
 
         RuleFor(x => x.Country)
-            .NotEmpty().WithErrorCode("EMPLOYEE_COUNTRY_REQUIRED");
+            .NotEmpty().WithErrorCode("EMPLOYEE_COUNTRY_REQUIRED")
+            .MaximumLength(100).WithErrorCode("EMPLOYEE_COUNTRY_TOO_LONG");
 
         RuleFor(x => x.Pincode)
-            .NotEmpty().WithErrorCode("EMPLOYEE_PINCODE_REQUIRED");
+            .NotEmpty().WithErrorCode("EMPLOYEE_PINCODE_REQUIRED")
+            .MaximumLength(20).WithErrorCode("EMPLOYEE_PINCODE_TOO_LONG");
     }
 
     private static bool BeAValidPhoneNumber(string phoneNo)

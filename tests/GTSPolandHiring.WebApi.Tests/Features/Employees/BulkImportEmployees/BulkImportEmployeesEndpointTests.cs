@@ -203,6 +203,76 @@ public class BulkImportEmployeesEndpointTests : IDisposable
         Assert.Equal("FILE_TOO_LARGE", problem.GetProperty("errorCode").GetString());
     }
 
+    [Fact]
+    public async Task Post_Does_Not_Hang_On_Malformed_Csv_Content()
+    {
+        // Regression test: a malformed row (mid-field stray quote) must not cause the handler's
+        // read loop to get stuck reprocessing the same position forever. A hard client-side
+        // timeout turns a hang into a clear test failure instead of blocking the whole test run.
+        var csv = $"""
+                   {Header}
+                   Anna "Nowak,2024-01-01,broken@company.com,+48123456789,https://example.com/a.png,Active,Addr,State,Country,City,00-000
+                   """;
+
+        using var content = BuildCsvContent(csv);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await _client.PostAsync(Endpoint, content, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            Assert.Fail("Bulk import did not complete within 10 seconds — possible infinite loop on malformed CSV.");
+            return;
+        }
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_Reports_Unterminated_Quote_As_A_Single_Malformed_Row_Without_Hanging()
+    {
+        // Regression test for a row with an unterminated quote (technically ambiguous per RFC
+        // 4180, since a quoted field may legitimately span multiple lines). Through the real
+        // upload pipeline, CsvHelper throws while reading it; our handler must catch that,
+        // advance past it, and keep processing the rest of the file instead of looping forever
+        // on the same position. The row that follows the unterminated quote is absorbed into
+        // this single failure and is not evaluated on its own.
+        var csv = $"""
+                   {Header}
+                   "Unterminated,2024-01-01,broken@company.com,+48123456789,https://example.com/a.png,Active,Addr,State,Country,City,00-000
+                   Anna Nowak,2024-01-02,anna.nowak@company.com,+48987654321,https://example.com/a.png,Active,Addr,State,Country,City,00-000
+                   """;
+
+        using var content = BuildCsvContent(csv);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await _client.PostAsync(Endpoint, content, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            Assert.Fail("Bulk import did not complete within 10 seconds — possible infinite loop on an unterminated quote.");
+            return;
+        }
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOptions);
+        Assert.Equal(1, body.GetProperty("totalRows").GetInt32());
+        Assert.Equal(0, body.GetProperty("imported").GetInt32());
+        Assert.Equal(1, body.GetProperty("failed").GetInt32());
+
+        var issue = body.GetProperty("issues").EnumerateArray().Single();
+        Assert.Equal("Failed", issue.GetProperty("status").GetString());
+        Assert.Equal("MALFORMED_ROW",
+            issue.GetProperty("errors").EnumerateArray().Single().GetProperty("code").GetString());
+    }
+
     public void Dispose()
     {
         _client.Dispose();
