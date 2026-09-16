@@ -1,23 +1,20 @@
-using GTSPolandHiring.WebApi.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using Asp.Versioning;
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+using GTSPolandHiring.WebApi.Features.Employees.BulkImportEmployees;
 using GTSPolandHiring.WebApi.Features.Employees.CreateEmployee;
+using GTSPolandHiring.WebApi.Features.Employees.DeleteEmployee;
 using GTSPolandHiring.WebApi.Features.Employees.GetEmployee;
 using GTSPolandHiring.WebApi.Features.Employees.GetEmployees;
 using GTSPolandHiring.WebApi.Features.Employees.UpdateEmployee;
-using GTSPolandHiring.WebApi.Features.Employees.DeleteEmployee;
-using GTSPolandHiring.WebApi.Features.Employees.BulkImportEmployees;
-using Scalar.AspNetCore;
-using FluentValidation;
 using GTSPolandHiring.WebApi.Infrastructure.Behaviors;
 using GTSPolandHiring.WebApi.Infrastructure.Errors;
 using GTSPolandHiring.WebApi.Infrastructure.Options;
-using Microsoft.Extensions.DependencyInjection;
-using System.Globalization;
+using GTSPolandHiring.WebApi.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -29,9 +26,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddMediatR(cfg =>
 {
-
     cfg.RegisterServicesFromAssemblyContaining<Program>();
-    
     cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
 });
 
@@ -53,12 +48,19 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     );
 });
 
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new ApiVersion(1,0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ReportApiVersions = true;
-});
+builder.Services
+    .AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+    })
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    })
+    .AddOpenApi();
 
 builder.Services.AddRequestTimeouts();
 
@@ -78,12 +80,12 @@ await using (var scope = app.Services.CreateAsyncScope())
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().WithDocumentPerVersion();
     app.MapScalarApiReference();
 }
 
 var apiVersionSet = app.NewApiVersionSet()
-    .HasApiVersion(new ApiVersion(1,0))
+    .HasApiVersion(new ApiVersion(1, 0))
     .Build();
 
 var v1Group = app.MapGroup("api/v{version:apiVersion}")
@@ -98,6 +100,8 @@ v1Group.MapBulkImportEmployeesEndpoint();
 
 app.UseHttpsRedirection();
 
+app.UseExceptionHandler();
+
 app.UseRequestTimeouts();
 
 var supportedCultures = new[] { "en-US" };
@@ -107,7 +111,5 @@ var localizationOptions = new RequestLocalizationOptions()
     .AddSupportedUICultures(supportedCultures);
 
 app.UseRequestLocalization(localizationOptions);
-
-app.UseExceptionHandler();
 
 app.Run();
