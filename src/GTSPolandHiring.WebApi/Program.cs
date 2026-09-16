@@ -5,6 +5,7 @@ using GTSPolandHiring.WebApi.Features.Employees.CreateEmployee;
 using GTSPolandHiring.WebApi.Features.Employees.GetEmployee;
 using GTSPolandHiring.WebApi.Features.Employees.GetEmployees;
 using GTSPolandHiring.WebApi.Features.Employees.UpdateEmployee;
+using GTSPolandHiring.WebApi.Features.Employees.DeleteEmployee;
 using Scalar.AspNetCore;
 using FluentValidation;
 using GTSPolandHiring.WebApi.Infrastructure.Behaviors;
@@ -71,6 +72,7 @@ v1Group.MapCreateEmployeeEndpoint();
 v1Group.MapGetEmployeeEndpoint();
 v1Group.MapGetEmployeesEndpoint();
 v1Group.MapUpdateEmployeeEndpoint();
+v1Group.MapDeleteEmployeeEndpoint();
 
 app.UseHttpsRedirection();
 
