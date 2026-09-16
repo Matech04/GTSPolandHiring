@@ -99,9 +99,6 @@ public class BulkImportEmployeesCommandHandler(AppDbContext dbContext, IValidato
             validRows.Add((rowNumber, row));
         }
 
-
-        // Emails are compared case-insensitively so "Jane@Company.com" is recognised as the same
-        // address as "jane@company.com" — the stored value keeps whatever casing was submitted.
         var csvEmailsLower = validRows.Select(r => r.Row.Email.ToLowerInvariant()).Distinct().ToList();
         var existingEmails = (await dbContext.Employees
                 .Where(e => csvEmailsLower.Contains(e.Email.ToLower()))
@@ -154,12 +151,6 @@ public class BulkImportEmployeesCommandHandler(AppDbContext dbContext, IValidato
         return Result.Ok(response);
     }
 
-    // All pre-checked rows are saved together in one round trip whenever possible. If that fails
-    // — e.g. another request inserted a colliding email between our pre-check and this save, or
-    // any other DB-level constraint we didn't anticipate — nothing from the batch was persisted
-    // (SaveChangesAsync is one transaction), so we fall back to saving rows one at a time. That
-    // isolates whichever row(s) still fail instead of turning the whole import into a 500 and
-    // losing the report for every row that was actually fine.
     private static async Task<int> SaveNewEmployeesAsync(
         AppDbContext dbContext,
         List<(int RowNumber, Employee Employee)> newEmployees,

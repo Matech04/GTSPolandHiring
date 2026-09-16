@@ -12,6 +12,7 @@ using FluentValidation;
 using GTSPolandHiring.WebApi.Infrastructure.Behaviors;
 using GTSPolandHiring.WebApi.Infrastructure.Errors;
 using GTSPolandHiring.WebApi.Infrastructure.Options;
+using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,6 +63,18 @@ builder.Services.AddApiVersioning(options =>
 builder.Services.AddRequestTimeouts();
 
 var app = builder.Build();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Tests swap in the InMemory provider, which doesn't support migrations at all — only
+    // apply them when we're actually talking to a real relational database.
+    if (dbContext.Database.IsRelational())
+    {
+        await dbContext.Database.MigrateAsync();
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {

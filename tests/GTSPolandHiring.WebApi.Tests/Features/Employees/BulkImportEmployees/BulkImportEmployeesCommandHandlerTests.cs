@@ -3,8 +3,8 @@ using GTSPolandHiring.WebApi.Features.Employees.BulkImportEmployees;
 using GTSPolandHiring.WebApi.Features.Employees.Entities;
 using GTSPolandHiring.WebApi.Infrastructure.Options;
 using GTSPolandHiring.WebApi.Infrastructure.Persistence;
+using GTSPolandHiring.WebApi.Tests.TestUtilities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 
 namespace GTSPolandHiring.WebApi.Tests.Features.Employees.BulkImportEmployees;
@@ -270,51 +270,6 @@ public class BulkImportEmployeesCommandHandlerTests : IDisposable
 
         Assert.Equal(2, await dbContext.Employees.CountAsync()); // the "racing" insert + Anna
         Assert.True(await dbContext.Employees.AnyAsync(e => e.Email == "anna.nowak@company.com"));
-    }
-
-    private sealed class ConflictSimulatingInterceptor(string dbName, string conflictingEmail)
-        : SaveChangesInterceptor
-    {
-        private bool _injected;
-
-        public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
-            DbContextEventData eventData,
-            InterceptionResult<int> result,
-            CancellationToken ct = default)
-        {
-            var touchesConflictingEmail = eventData.Context!.ChangeTracker.Entries<Employee>()
-                .Any(e => e.State == EntityState.Added &&
-                          string.Equals(e.Entity.Email, conflictingEmail, StringComparison.OrdinalIgnoreCase));
-
-            if (!touchesConflictingEmail)
-            {
-                return base.SavingChangesAsync(eventData, result, ct);
-            }
-
-            if (!_injected)
-            {
-                _injected = true;
-
-                using var racingContext = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
-                    .UseInMemoryDatabase(dbName)
-                    .Options);
-                racingContext.Employees.Add(new Employee
-                {
-                    Name = "Racing Employee",
-                    Email = conflictingEmail,
-                    HireDate = new DateOnly(2020, 1, 1),
-                    PhoneNo = "+48000000000",
-                    Address = "Addr",
-                    State = "State",
-                    Country = "Country",
-                    City = "City",
-                    Pincode = "00-000"
-                });
-                racingContext.SaveChanges();
-            }
-
-            throw new DbUpdateException("Simulated unique constraint violation for test purposes.");
-        }
     }
 
     public void Dispose() => _dbContext.Dispose();
